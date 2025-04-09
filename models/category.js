@@ -16,6 +16,12 @@ const categorySchema = Schema({
         type: String,
         default: 'ACT'
     },
+
+    img: {
+        type: String,
+        default: 'image category.png'
+    },
+
     created_at:{
         type: Date,
         default: Date.now()
