@@ -7,10 +7,12 @@ const gameSchema = Schema({
         required: true
     },
 
-    category:{
-        type: Schema.ObjectId,
-        ref: 'Category'
-    },
+    category:[
+        {
+            type: Schema.ObjectId,
+            ref: 'Category'
+        }
+    ],
     
     price:{
         type: Number,
@@ -27,10 +29,12 @@ const gameSchema = Schema({
         default: 'ACT'
     },
 
-    plataforma:{
-        type: String,
-        default: 'pc'
-    },
+    plataforma:[
+        {
+            type: String,
+            default: 'pc'
+        }
+    ],
 
     image:{
         type: String,
@@ -40,6 +44,18 @@ const gameSchema = Schema({
     descuento:{
         type: Number,
         default: 0
+    },
+
+    idioma:[
+        {
+            type: String,
+            default: 'ES'
+        }
+    ],
+
+    peso:{
+        type: Number,
+        default: 50
     },
 
     created_at:{
