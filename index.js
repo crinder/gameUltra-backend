@@ -34,12 +34,14 @@ const categoryRouter = require('./routes/category');
 const gameRouter = require('./routes/game');
 const pedidoRouter = require('./routes/pedido');
 const reviewRouter = require('./routes/review');
+const sliderRouter = require('./routes/slider');
 
 app.use('/api/user',userRouter);
 app.use('/api/category/',categoryRouter);
 app.use('/api/game',gameRouter);
 app.use('/api/pedido',pedidoRouter);
 app.use('/api/review',reviewRouter);
+app.use('/api/slider',sliderRouter);
 
 app.listen(port, () => {
     console.log("servidor corriendo en el puerto");
