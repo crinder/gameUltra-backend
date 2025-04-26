@@ -189,9 +189,8 @@ const upload = async (req, res) => {
 }
 
 const images = async (req, res) => {
+    
     const nomImg = req.params.img;
-
-
     const filePath = "./uploads/category/" + nomImg;
 
     fs.stat(filePath, (error, exists) => {

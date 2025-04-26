@@ -11,62 +11,39 @@ const upload = async (req, res) => {
     let element;
     let position = 0;
 
-    if (!params.ids) {
-        if (files == undefined || !files) {
-            return res.status(400).send({
-                status: "error",
-                message: "Faltan parametros"
-            });
-        }
 
-        if (params.id.length > 1) {
-            
-            params.id.forEach((element, index) => {
-                ids.push({ id: element, index: index });
-                position++;
-            });
-        }else{
-            ids.push({ id: params.id, index: 0 });
-        }
+    if (files == undefined || !files) {
+        return res.status(400).send({
+            status: "error",
+            message: "Faltan parametros"
+        });
+    }
 
+    if (Array.isArray(params.id)) {
 
-        files.map((file, index) => {
-
-            let image = file.filename;
-
-
-            if(ids.length > 0) {
-                element = ids[index].id;
-                params.id = element;
-                params.position = ids[index].index;
-            }
-
-            let imageSplit = image.split("\.");
-            let ext = imageSplit[1];
-
-
-            if (ext != 'png' && ext != "jpeg" && ext != 'gif' && ext != 'jpg') {
-
-                // se borrar la extension del archivo
-                const filePath = req.file.path;
-                const fileDelete = fs.unlinkSync(filePath);
-            }
-
-            params.image = image;
-            params.created_at = Date.now();
-
-            const sliderSaved = new Slider(params);
-
-            sliderSaved.save();
+        params.id.forEach((element, index) => {
+            ids.push({ id: element, index: index });
+            position++;
         });
     } else {
+        ids.push({ id: params.id, index: 0 });
+    }
 
-        let image = files.filename;
 
-        //sacar la extensión del archivo
+    files.map((file, index) => {
+
+        let image = file.filename;
+
+
+        if (ids.length > 0) {
+            element = ids[index].id;
+            params.id = element;
+            params.position = ids[index].index;
+        }
 
         let imageSplit = image.split("\.");
         let ext = imageSplit[1];
+
 
         if (ext != 'png' && ext != "jpeg" && ext != 'gif' && ext != 'jpg') {
 
@@ -77,22 +54,12 @@ const upload = async (req, res) => {
 
 
         params.image = image;
+        params.created_at = Date.now();
 
-        Slider.findByIdAndUpdate({ _id: id }, params, { new: true })
-            .then(slider => {
-                return res.status(200).send({
-                    status: "success",
-                    message: "registro actualizado",
-                    slider: slider
-                });
-            }).catch(error => {
-                return res.status(500).send({
-                    status: "error",
-                    message: "Error guardando juego"
-                });
-            });
+        const sliderSaved = new Slider(params);
 
-    }
+        sliderSaved.save();
+    });
 
     return res.status(200).send({
         status: "success",
@@ -102,7 +69,7 @@ const upload = async (req, res) => {
 
 const list = async (req, res) => {
 
-    Slider.find()
+    Slider.find().sort('position')
         .then(slider => {
             return res.status(200).send({
                 status: "success",
@@ -135,8 +102,63 @@ const deleteSlider = (req, res) => {
         });
 }
 
+const images = async (req, res) => {
+    const nomImg = req.params.img;
+
+
+    const filePath = "./uploads/slider/" + nomImg;
+
+    fs.stat(filePath, (error, exists) => {
+
+        if (!exists) {
+            return res.status(404).send({
+                status: "success",
+                message: "No existe imagen"
+            });
+        }
+
+        return res.sendFile(path.resolve(filePath));
+
+    });
+
+}
+
+const updatePosition = async (req,res) =>{
+
+    const positions = req.body.position;
+    const ids  = req.body.del;
+
+    if(ids){
+        await  ids.forEach( async id => {
+
+           const image = await Slider.findOne({id: id}).select('image');
+
+           const fileDelete = fs.unlinkSync("./uploads/slider/" + image.image);
+
+            await Slider.findOneAndDelete({id: id});
+        });
+    }
+
+    if(positions){
+
+      await  positions.forEach( async pos => {
+
+          await Slider.findOneAndUpdate({id: pos.id}, pos, {new: true});
+
+        });
+    }
+
+    return res.status(200).send({
+        status: 'success',
+        message: 'posiciones actualizadas'
+    });
+
+}
+
 module.exports = {
     upload,
     list,
-    deleteSlider
+    deleteSlider,
+    images,
+    updatePosition
 }
