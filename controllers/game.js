@@ -65,12 +65,20 @@ const register = async (req, res) => {
 
 const list = async (req, res) => {
 
+    const {page = 1, limit = 12} = req.body;
+    const offset = (page - 1) * limit;
+
+    const total = await Game.countDocuments();
+
     Game.find()
+        .skip(offset)
+        .limit(parseInt(limit))
         .then(game => {
             return res.status(200).send({
                 status: "success",
                 message: "listado completado",
-                game: game
+                game: game,
+                total: Math.ceil(total / limit)
             });
         }).catch(error => {
             return res.status(400).send({

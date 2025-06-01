@@ -13,8 +13,8 @@ const reviewSchema = Schema({
     },
 
     calificacion:{
-        type: Number,
-        default: 0
+        type: Number, 
+        min: 1, max: 5, default: 0 
     },
 
     comentario:{
