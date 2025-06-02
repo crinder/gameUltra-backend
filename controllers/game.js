@@ -65,12 +65,31 @@ const register = async (req, res) => {
 
 const list = async (req, res) => {
 
-    const {page = 1, limit = 12} = req.body;
+    const {page = 1, limit = 12, category = [], price_from = 0, price_to = 0, descuento = 0} = req.body;
     const offset = (page - 1) * limit;
 
-    const total = await Game.countDocuments();
+    let query = {};
 
-    Game.find()
+    if (category.length > 0) {
+        query.category = { $in: category };
+    }
+
+    if (price_from > 0) {
+        query.price = { $gte: price_from };
+    }
+
+    if (price_to > 0) {
+        query.price = { $lte: price_to };
+    }
+
+    if (descuento > 0) {
+        query.descuento = { $lte: descuento };
+    }
+
+
+    const total = await Game.countDocuments(query);
+
+    Game.find(query)
         .skip(offset)
         .limit(parseInt(limit))
         .then(game => {
