@@ -21,7 +21,7 @@ router.get('/prueba',gameController.prueba);
 router.post('/register',gameController.register);
 router.post('/list',gameController.list);    
 router.get('/delete/:id',gameController.deleteGame);
-router.post('/update/:id',gameController.update);
+router.post('/update',gameController.update);
 router.post('/upload', upload.single('file'), gameController.upload);
 router.get('/images/:img', gameController.images);
 router.get('/list-one/:id', gameController.listOne);

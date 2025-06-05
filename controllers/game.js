@@ -65,7 +65,7 @@ const register = async (req, res) => {
 
 const list = async (req, res) => {
 
-    const {page = 1, limit = 12, category = [], price_from = 0, price_to = 0, descuento = 0} = req.body;
+    const { page = 1, limit = 12, category = [], price_from = 0, price_to = 0, descuento = 0 } = req.body;
     const offset = (page - 1) * limit;
 
     let query = {};
@@ -125,25 +125,35 @@ const deleteGame = (req, res) => {
         });
 }
 
-const update = (req, res) => {
+const update = async(req, res) => {
 
-    const id = req.params.id;
-    const params = req.body;
+    const {descuento, destacado} = req.body;
+    
+    for (const key in descuento) {
 
-    Game.findByIdAndUpdate({ _id: id }, params, { new: true })
-        .then(gameUpdate => {
-            return res.status(200).send({
-                status: "success",
-                message: "registro actualizado",
-                game: gameUpdate
-            });
-        }).catch(error => {
-            return res.status(400).send({
-                status: "error",
-                message: "Error actualizando usuario",
-                error: error.message
-            });
-        });
+        let parametro = {
+            descuento: descuento[key]
+        }
+
+        await Game.findByIdAndUpdate({ _id: key }, parametro, { new: true });
+
+    }
+
+    for (const key in destacado) {
+
+        let parametro = {
+            destacado: destacado[key]
+        }
+
+        await Game.findByIdAndUpdate({ _id: key }, parametro, { new: true });
+
+    }
+
+
+    return res.status(200).send({
+        status: "success",
+        message: "registro actualizado"
+    });
 }
 
 const upload = async (req, res) => {
@@ -183,7 +193,7 @@ const upload = async (req, res) => {
         Game.find({ name: { $regex: new RegExp(params.name, 'i') } })
             .then(async games => {
 
-                games.forEach(game => { 
+                games.forEach(game => {
 
                     if (game.name === params.name && game._id.toString() != params.id) {
                         return res.status(500).send({
@@ -245,7 +255,7 @@ const upload = async (req, res) => {
 
                 if (games.length > 0) {
 
-                    games.forEach(game => { 
+                    games.forEach(game => {
 
                         if (game.name === params.name && game._id.toString() != params.id) {
                             return res.status(500).send({

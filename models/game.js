@@ -58,6 +58,11 @@ const gameSchema = Schema({
         default: 50
     },
 
+    destacado:{
+        type: String,
+        default: 'N'
+    },
+
     created_at:{
         type: Date,
         default: Date.now()
