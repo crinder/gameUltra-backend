@@ -65,7 +65,7 @@ const register = async (req, res) => {
 
 const list = async (req, res) => {
 
-    const { page = 1, limit = 12, category = [], price_from = 0, price_to = 0, descuento = 0 } = req.body;
+    const { page = 1, limit = 12, category = [], price_from = 0, price_to = 0, descuento = 0, destacado = 'N' } = req.body;
     const offset = (page - 1) * limit;
 
     let query = {};
@@ -84,6 +84,10 @@ const list = async (req, res) => {
 
     if (descuento > 0) {
         query.descuento = { $lte: descuento };
+    }
+
+    if(destacado == 'S'){
+        query.destacado = { $eq: destacado };
     }
 
 

@@ -23,6 +23,11 @@ const sliderSchema = Schema({
         default: 0
     },
 
+    tipo:{
+        type: String,
+        default: 'S'
+    },
+
     created_at: {
         type: Date,
         default: Date.now()

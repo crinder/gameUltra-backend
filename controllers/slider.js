@@ -45,7 +45,7 @@ const upload = async (req, res) => {
         let ext = imageSplit[1];
 
 
-        if (ext != 'png' && ext != "jpeg" && ext != 'gif' && ext != 'jpg') {
+        if (ext != 'png' && ext != "jpeg" && ext != 'gif' && ext != 'jpg' && ext != 'webp') {
 
             // se borrar la extension del archivo
             const filePath = req.file.path;
@@ -69,7 +69,17 @@ const upload = async (req, res) => {
 
 const list = async (req, res) => {
 
-    Slider.find().sort('position')
+    const params = req.body;
+    let body = {};
+
+    body.tipo = params.tipo;
+
+
+    if(!params.tipo){
+        body.tipo = 'S';
+    }
+
+    Slider.find(body).sort('position')
         .then(slider => {
             return res.status(200).send({
                 status: "success",
@@ -127,6 +137,7 @@ const updatePosition = async (req,res) =>{
 
     const positions = req.body.position;
     const ids  = req.body.del;
+    const tipoS = req.body.tipo;
 
     if(ids){
         await  ids.forEach( async id => {
@@ -143,7 +154,7 @@ const updatePosition = async (req,res) =>{
 
       await  positions.forEach( async pos => {
 
-          await Slider.findOneAndUpdate({id: pos.id}, pos, {new: true});
+          await Slider.findOneAndUpdate({id: pos.id}, {$set: {...pos, tipo: tipoS}}, {new: true});
 
         });
     }

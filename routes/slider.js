@@ -16,7 +16,7 @@ var storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post('/upload', upload.array('files'), sliderController.upload);
-router.get('/list', sliderController.list);
+router.post('/list', sliderController.list);
 router.delete('/delete/:id', sliderController.deleteSlider);
 router.get('/images/:img', sliderController.images);
 router.post('/update',sliderController.updatePosition);
