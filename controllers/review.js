@@ -3,6 +3,7 @@ const Game = require('../models/game');
 const moment = require('moment');
 const jwt = require('../service/jwt');
 const ObjectId = require('mongodb').ObjectId;
+const User = require('../models/users');
 
 const prueba = (req, res) => {
     return res.status(200).send({
@@ -12,7 +13,11 @@ const prueba = (req, res) => {
 }
 
 const register = async (req, res) => {
+
+    
     const params = req.body;
+    const user_id = req.user.id;
+
 
     if (!params.id_game || !params.calificacion || !params.comentario) {
         return res.status(400).send({
@@ -30,7 +35,20 @@ const register = async (req, res) => {
         });
     }
 
+    const user_exist = await User.findById(user_id);
+
+    console.log('user_exist...', user_exist);
+    console.log('user_id...', user_id);
+
+    if (!user_exist) {
+        return res.status(400).send({
+            status: "error",
+            message: "Error no existe el usuario"
+        });
+    }
+
     params.created_at = moment().unix();
+    params.id_user = user_id;
 
     const reviewSaved = new Review(params);
 
@@ -55,6 +73,7 @@ const register = async (req, res) => {
 const listOne = async (req, res) => {
 
     Review.find({id_game: req.params.id })
+        .populate('id_user')
         .then(review => {
             return res.status(200).send({
                 status: "success",

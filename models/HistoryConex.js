@@ -1,7 +1,6 @@
-const {Schema, model} = require('mongoose');
+const { Schema, model } = require('mongoose');
 
-const usersSchema = Schema({
-
+const HistorySchema = new Schema({
     sub:{
         type: String,
         required: true
@@ -26,11 +25,6 @@ const usersSchema = Schema({
         type: Date,
         default: Date.now()
     },
-
-    isAnonymous:{
-        type: Boolean,
-        default: false
-    },
     
     created_at:{
         type: Date,
@@ -40,8 +34,13 @@ const usersSchema = Schema({
     token:{
         type: String,
         default: 'token'
+    },
+
+    id_user:{
+        type: Schema.ObjectId,
+        ref: 'Users'
     }
+        
+}); 
 
-});
-
-module.exports = model('Users', usersSchema,'users');
+module.exports = model('HistoryConex', HistorySchema, 'HistoryConex');

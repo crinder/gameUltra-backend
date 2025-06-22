@@ -1,9 +1,9 @@
-const users = require('../models/users');
 const User = require('../models/users');
+const HistoryConex = require('../models/HistoryConex');
 const bcrypt = require('bcrypt');
 const jwt = require('../service/jwt');
 const moment = require('moment');
-
+const result = require('dotenv').config();
 
 const prueba = (req, res) => {
     return res.status(200).send({
@@ -12,49 +12,116 @@ const prueba = (req, res) => {
     });
 }
 
-const register = async (req, res) => {
+const checkToken = (data) => {
+
+    const timeDate = Date.now() / 1000;
+
+    return (
+        data.iss == 'https://accounts.google.com' &&
+        data.aud == process.env.CLIENT_ID_GOOGLE &&
+        data.exp > timeDate
+    );
+};
+
+const register = async (data) => {
+
+    const user = new User(data);
+
+    const userSave = await user.save();
+};
+
+
+const checkUser = async (data) => {
+
+    const user = await User.findOne({ sub: data.sub });
+
+    if (user) {
+        let userBack = {
+            id_user: user._id,
+            sub: user.sub,
+            name: user.name,
+            email: user.email,
+            picture: user.picture,
+            lastLogin: user.lastLogin,
+            isAnonymous: user.isAnonymous,
+            created_at: user.created_at,
+            token: user.token
+        }
+
+        console.log('user...', userBack);
+
+        const history = new HistoryConex(userBack);
+        await history.save();
+        await User.findOneAndUpdate({ sub: data.sub }, user, { $set: { lastLogin: Date.now() } });
+
+        console.log('actuliza user...', user);
+
+    } else {
+        console.log('regisro...', data);
+       await register(data);
+        console.log('registro...', data);
+    }
+
+};
+
+const authGoogle = async (req, res) => {
     const params = req.body;
 
-
-    if (!params.nickname || !params.email || !params.password) {
+    if (!params.token) {
         return res.status(400).send({
             status: "error",
             message: "Faltan parametros"
         });
     }
 
-    User.find({
-        $or: [
-            { email: params.email.toLowerCase() },
-            { nickname: params.nickname.toLowerCase() }
-        ]
-    }).then(async users => {
-        if (users && users.length >= 1) {
-            return res.status(500).send({
-                status: "error",
-                message: "Error ya existe el usuario"
-            });
+    try {
+        const base64Url = params.token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+
+        let data = JSON.parse(jsonPayload);
+
+        if (checkToken(data)) {
+           await checkUser(data);
+
+            console.log('data...', data);
+
+            const userSa = await User.findOne({ sub: data.sub.toString() });
+
+            console.log('userSa...', userSa);   
+
+            if (userSa) {
+
+                const tokenRefresh = jwt.createtokenRefresh(userSa);
+
+                res.cookie('token_refresh', tokenRefresh, {
+                    httpOnly: true,
+                    secure: false,
+                    SameSite: 'Lax',
+                    maxAge: 3600000
+                });
+
+                res.status(200).send({
+                    status: "success",
+                    user: data,
+                    token: tokenRefresh
+                });
+            }else{
+                return res.status(400).send({
+                    status: "error",
+                    message: "Error al autenticar"
+                });
+            }
         }
 
-        const salt = await bcrypt.genSalt(10);
-        params.password = await bcrypt.hash(params.password, salt);
+    } catch (e) {
+        console.error("Error al decodificar el JWT:", e);
+        return null;
+    }
 
-        const userSaved = new User(params);
-
-        userSaved.save()
-            .then(user => {
-                return res.status(200).send({
-                    status: "success",
-                    message: "registro guardado",
-                    user: user
-                });
-            }).catch(error => {
-                return res.status(500).send({
-                    status: "error",
-                    message: "Error guardando usuario"
-                });
-            });
-    });
 }
 
 const profile = async (req, res) => {
@@ -105,7 +172,7 @@ const login = async (req, res) => {
 
     let params = req.body;
 
-    if (!params.nickname  || !params.password) {
+    if (!params.nickname || !params.password) {
 
         return res.status(400).send({
             status: 400,
@@ -134,15 +201,7 @@ const login = async (req, res) => {
                 });
             }
 
-            const tokenRefresh = jwt.createtokenRefresh(userStored);
 
-
-            res.cookie('token_refresh', tokenRefresh,{
-                httpOnly: true,
-                secure: false,
-                SameSite: 'Lax',
-                maxAge: 3600000 
-            });
 
             res.status(200).send({
                 status: "success",
@@ -161,9 +220,41 @@ const login = async (req, res) => {
         });
 }
 
+const refresh = (req, res) => {
+
+    const user = req.user;
+    const tokenNew = req.tokenNew;
+
+    if (!user) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'error no existe token',
+            token: null
+        });
+    }
+
+    if (tokenNew) {
+        return res.status(200).json({
+            status: 'success',
+            token: tokenNew,
+            message: 'token anterior'
+        });
+    }
+
+    const newToken = jwt.createToken(user);
+
+    return res.status(200).json({
+        status: 'success',
+        token: newToken,
+        id_user: user.id
+    })
+}
+
 module.exports = {
     prueba,
     register,
     profile,
-    login
+    login,
+    authGoogle,
+    refresh
 }

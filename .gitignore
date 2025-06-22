@@ -4,3 +4,4 @@
 /service
 /middleware
 /uploads
+.env
