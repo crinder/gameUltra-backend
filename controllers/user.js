@@ -58,7 +58,7 @@ const checkUser = async (data) => {
 
     } else {
         console.log('regisro...', data);
-       await register(data);
+        await register(data);
         console.log('registro...', data);
     }
 
@@ -85,13 +85,9 @@ const authGoogle = async (req, res) => {
         let data = JSON.parse(jsonPayload);
 
         if (checkToken(data)) {
-           await checkUser(data);
-
-            console.log('data...', data);
+            await checkUser(data);
 
             const userSa = await User.findOne({ sub: data.sub.toString() });
-
-            console.log('userSa...', userSa);   
 
             if (userSa) {
 
@@ -100,7 +96,7 @@ const authGoogle = async (req, res) => {
                 res.cookie('token_refresh', tokenRefresh, {
                     httpOnly: true,
                     secure: false,
-                    SameSite: 'Lax',
+                    sameSite: 'Lax',
                     maxAge: 3600000
                 });
 
@@ -109,7 +105,7 @@ const authGoogle = async (req, res) => {
                     user: data,
                     token: tokenRefresh
                 });
-            }else{
+            } else {
                 return res.status(400).send({
                     status: "error",
                     message: "Error al autenticar"
@@ -246,8 +242,23 @@ const refresh = (req, res) => {
     return res.status(200).json({
         status: 'success',
         token: newToken,
-        id_user: user.id
+        id_user: user.id,
+        image: user.img
     })
+}
+
+const logout = (req, res) => {
+
+    res.clearCookie("token_refresh", {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Lax',
+        path: '/'
+    });
+    return res.status(200).json({
+        status: 'success',
+        message: 'usuario desconectado'
+    });
 }
 
 module.exports = {
@@ -256,5 +267,6 @@ module.exports = {
     profile,
     login,
     authGoogle,
-    refresh
+    refresh,
+    logout
 }

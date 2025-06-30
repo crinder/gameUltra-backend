@@ -8,7 +8,7 @@ const pedidoSchema = Schema({
     },
 
     created_at:{
-        type: Date,
+        type: String,
         default: Date.now()
     },
 
@@ -19,23 +19,49 @@ const pedidoSchema = Schema({
 
     method:{
         type: String,
-        default: 'us'
+        default: 'US'
     },
 
-    total_local:{
+    total_neto:{
         type: Number,
         default: 0
     },
 
-    game:{
-        type: Object,
-        default: {}
+    game:[
+        {
+            id_game: {
+                type: Schema.ObjectId,
+                ref: 'Game'
+            },
+            name: {
+                type: String,
+                default: ''
+            },
+            price: {
+                type: Number,
+                default: 0
+            },
+            descuento: {
+                type: Number,
+                default: 0
+            },
+            image: {
+                type: String,
+                default: '' 
+            }
+        }
+    ],
+        
+    descuento:{
+        type: Number,
+        default: 0
     },
 
-    total_money:{
+    total:{
         type: Number,
         default: 0
     }
+
 
 });
 

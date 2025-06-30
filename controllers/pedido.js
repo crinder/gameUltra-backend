@@ -5,6 +5,9 @@ const User = require('../models/users');
 const moment = require('moment');
 const jwt = require('../service/jwt');
 
+const opcion = { year: 'numeric', month: '2-digit', day: '2-digit' };
+const hoy = new Date();
+
 const prueba = (req, res) => {
     return res.status(200).send({
         status: "success",
@@ -13,58 +16,69 @@ const prueba = (req, res) => {
 }
 
 const register = async (req, res) => {
-    const params = req.body;
 
-    if (!params.id_game) {
+    const params = req.body;
+    const games = params.game;
+
+    let totalGames = 0;
+    let descuento = 0
+    let total = 0;
+    let gamesNew = [];
+
+    if (!games) {
+
         return res.status(400).send({
             status: "error",
             message: "Faltan parametros"
         });
     }
 
-    let game = await Game.findById(params.id_game);
+    params.id_user = req.user.id;
 
-    if (!game) {
-        return res.status(400).send({
-            status: "error",
-            message: "Error no existe el juego"
+    const totales = games.map(async game => {
+
+        let juegos = [];
+
+        totalGames += game.value.price;
+        descuento += game.value.price * game.value.descuento / 100;
+        total += game.value.price - game.value.price * game.value.descuento / 100;
+
+        juegos = {
+            id_game: game.id,
+            name: game.value.name,
+            price: game.value.price,
+            descuento: game.value.descuento,
+            image: game.value.image
+        }
+        gamesNew.push(juegos);
+
+    });
+
+    params.total = total;
+    params.descuento = descuento;
+    params.total_neto = totalGames;
+    params.game = gamesNew;
+    const sysdate = hoy.toLocaleString('es-ES', opcion);
+    params.created_at = moment(sysdate, 'DD/MM/YYYY HH:mm:ss').toDate();
+
+    const gamesSave = new Pedido(params);
+
+    gamesSave.save()
+        .then(game => {
+            return res.status(200).send({
+                status: "success",
+                message: "registro guardado",
+                pedido: game
+            });
         });
-    }
 
-    params.created_at = moment().unix();
-
-    Pedido.find({id_game: params.id_game })
-        .then(async pedido => {
-            if (pedido && pedido.length >= 1) {
-                return res.status(500).send({
-                    status: "error",
-                    message: "Error ya existe el pedido"
-                });
-            }
-
-            const pedidoSaved = new Pedido(params);
-
-            pedidoSaved.save()
-                .then(pedido => {
-                    return res.status(200).send({
-                        status: "success",
-                        message: "registro guardado",
-                        pedido: pedido
-                    });
-                }).catch(error => {
-                    return res.status(500).send({
-                        status: "error",
-                        message: "Error guardando pedido",
-                        error: error.message
-
-                    });
-                });
-        });
 }
 
 const list = async (req, res) => {
 
-    Pedido.find()
+    const id_user = req.user.id;
+
+    Pedido.find({ id_user: id_user })
         .then(pedido => {
             return res.status(200).send({
                 status: "success",
